@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Student Management</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<style>
+    .container {
+        padding: 0;
+    }
+</style>
+<body>
+<div class="container mt-5">
+    <h2>Student Management</h2>
+
+    <!-- Display Error Message -->
+    <div th:if="${error}" class="alert alert-danger" role="alert" aria-live="assertive">
+        <strong>Error:</strong> <span th:text="${error}"></span>
+    </div>
+
+    <!-- Add Student Form -->
+    <div class="d-flex justify-content-between mb-3">
+        <form th:action="@{/students/add}" method="post" class="form-inline" onsubmit="return validateMarks()">
+            <input type="text" name="id" class="form-control mr-2" placeholder="Student ID" required>
+            <input type="text" name="name" class="form-control mr-2" placeholder="Student Name" required>
+            <input type="number" name="marks" class="form-control mr-2" placeholder="Marks" max="10" min="0" step="0.1" required id="marks">
+            <button type="submit" class="btn btn-primary">Add Student</button>
+            <button type="button" class="btn btn-secondary" onclick="clearForm()">Clear</button>
+        </form>
+
+        <!-- Search and Back Buttons -->
+        <div>
+            <form th:action="@{/students}" method="get" class="form-inline">
+                <input type="text" name="search" class="form-control mr-2" th:placeholder="'Search by name'" th:value="${search}" aria-label="Search by student name">
+                <button type="submit" class="btn btn-secondary">Search</button>
+                <a th:href="@{/students}" class="btn btn-outline-secondary ml-2">Back</a>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sort Buttons -->
+    <div class="mb-3">
+        <a href="/students/sort/name" class="btn btn-info">Sort by Name <span th:text="${currentSortOrderName == 'asc' ? '↓' : '↑'}"></span></a>
+        <a href="/students/sort/marks" class="btn btn-info">Sort by Marks <span th:text="${currentSortOrderMarks == 'asc' ? '↓' : '↑'}"></span></a>
+    </div>
+
+    <!-- Student List Table -->
+    <table class="table table-bordered">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Marks</th>
+            <th>Rank</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="student : ${students}">
+            <td th:text="${student.id}"></td>
+            <td th:text="${student.name}"></td>
+            <td th:text="${student.marks}"></td>
+            <td th:text="${student.rank}"></td>
+            <td>
+                <a th:href="@{/students/edit/{id}(id=${student.id})}" class="btn btn-warning btn-sm">Edit</a>
+                <form th:action="@{/students/delete}" method="post" class="d-inline">
+                    <input type="hidden" name="id" th:value="${student.id}" />
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- JavaScript for validating maximum marks -->
+<script>
+    function validateMarks() {
+        const marksInput = document.getElementById("marks");
+        const marks = parseFloat(marksInput.value);
+
+        if (marks > 10) {
+            alert("Marks cannot exceed 10.");
+            return false; // Prevent form submission
+        }
+        return true; // Allow form submission
+    }
+
+    // JavaScript to clear the form
+    function clearForm() {
+        document.querySelector('form').reset();
+    }
+</script>
+
+</body>
+</html>
