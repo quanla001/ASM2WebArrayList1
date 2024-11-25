@@ -21,9 +21,8 @@ public class StudentController {
     // Show the student list
     @GetMapping
     public String listStudents(Model model, @RequestParam(required = false) String search) {
-        List<Student> students;
         try {
-            students = studentService.getAllStudents();
+            List<Student> students = studentService.getAllStudents();
 
             // Filter students if search query is present
             if (search != null && !search.isEmpty()) {
@@ -31,30 +30,28 @@ public class StudentController {
                         .filter(student -> student.getName().toLowerCase().contains(search.toLowerCase()))
                         .collect(Collectors.toList());
             }
+            model.addAttribute("students", students);
         } catch (Exception e) {
             model.addAttribute("error", "Error fetching students: " + e.getMessage());
-            students = List.of(); // Empty list in case of error
         }
 
-        model.addAttribute("students", students);
         model.addAttribute("currentSortOrderName", currentSortOrderName);
         model.addAttribute("currentSortOrderMarks", currentSortOrderMarks);
         model.addAttribute("search", search); // Add search term to model for the view
         return "index"; // Name of the main student list view
     }
 
+
     // Add a new student
     @PostMapping("/add")
     public String addStudent(@ModelAttribute Student student, Model model) {
         try {
-            if (student.getMarks() > 10) {
-                model.addAttribute("error", "Marks cannot exceed 10.");
-                return "addStudent"; // Return to the add form with an error message
-            }
-            student.setRank(studentService.calculateRank(student.getMarks()));
             studentService.addStudent(student);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", "Validation Error: " + e.getMessage());
+            return "addStudent"; // Return to the add form with an error message
         } catch (Exception e) {
-            model.addAttribute("error", "Error adding student: " + e.getMessage());
+            model.addAttribute("error", "Unexpected Error: " + e.getMessage());
             return "addStudent";
         }
         return "redirect:/students";
@@ -66,8 +63,11 @@ public class StudentController {
         try {
             Student student = studentService.findStudentById(id);
             model.addAttribute("student", student);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", "Validation Error: " + e.getMessage());
+            return "redirect:/students";
         } catch (Exception e) {
-            model.addAttribute("error", "Error loading student data: " + e.getMessage());
+            model.addAttribute("error", "Unexpected Error: " + e.getMessage());
             return "redirect:/students";
         }
         return "editStudent"; // Name of the edit view
@@ -77,14 +77,12 @@ public class StudentController {
     @PostMapping("/edit")
     public String editStudent(@ModelAttribute Student student, Model model) {
         try {
-            if (student.getMarks() > 10) {
-                model.addAttribute("error", "Marks cannot exceed 10.");
-                return "editStudent"; // Return to the edit form with an error message
-            }
-            student.setRank(studentService.calculateRank(student.getMarks()));
             studentService.updateStudent(student);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", "Validation Error: " + e.getMessage());
+            return "editStudent"; // Return to the edit form with an error message
         } catch (Exception e) {
-            model.addAttribute("error", "Error updating student: " + e.getMessage());
+            model.addAttribute("error", "Unexpected Error: " + e.getMessage());
             return "editStudent";
         }
         return "redirect:/students";
@@ -95,20 +93,21 @@ public class StudentController {
     public String deleteStudent(@RequestParam String id, Model model) {
         try {
             studentService.deleteStudent(id);
+        } catch (IllegalArgumentException e) {
+            model.addAttribute("error", "Validation Error: " + e.getMessage());
         } catch (Exception e) {
-            model.addAttribute("error", "Error deleting student: " + e.getMessage());
+            model.addAttribute("error", "Unexpected Error: " + e.getMessage());
         }
         return "redirect:/students";
     }
 
+
     // Sort students by name, with search persistence
     @GetMapping("/sort/name")
     public String sortStudentsByName(Model model, @RequestParam(required = false) String search) {
-        currentSortOrderName = currentSortOrderName.equals("asc") ? "desc" : "asc"; // Toggle order
-        List<Student> students;
-
         try {
-            students = studentService.sortStudentsByName(currentSortOrderName.equals("asc"));
+            currentSortOrderName = currentSortOrderName.equals("asc") ? "desc" : "asc"; // Toggle order
+            List<Student> students = studentService.sortStudentsByName(currentSortOrderName.equals("asc"));
 
             // Apply search filter if present
             if (search != null && !search.isEmpty()) {
@@ -116,12 +115,11 @@ public class StudentController {
                         .filter(student -> student.getName().toLowerCase().contains(search.toLowerCase()))
                         .collect(Collectors.toList());
             }
+            model.addAttribute("students", students);
         } catch (Exception e) {
             model.addAttribute("error", "Error sorting students by name: " + e.getMessage());
-            students = List.of(); // Empty list in case of error
         }
 
-        model.addAttribute("students", students);
         model.addAttribute("currentSortOrderName", currentSortOrderName);
         model.addAttribute("currentSortOrderMarks", currentSortOrderMarks);
         model.addAttribute("search", search);
@@ -131,11 +129,9 @@ public class StudentController {
     // Sort students by marks, with search persistence
     @GetMapping("/sort/marks")
     public String sortStudentsByMarks(Model model, @RequestParam(required = false) String search) {
-        currentSortOrderMarks = currentSortOrderMarks.equals("asc") ? "desc" : "asc"; // Toggle order
-        List<Student> students;
-
         try {
-            students = studentService.sortStudentsByMarks(currentSortOrderMarks.equals("asc"));
+            currentSortOrderMarks = currentSortOrderMarks.equals("asc") ? "desc" : "asc"; // Toggle order
+            List<Student> students = studentService.sortStudentsByMarks(currentSortOrderMarks.equals("asc"));
 
             // Apply search filter if present
             if (search != null && !search.isEmpty()) {
@@ -143,15 +139,15 @@ public class StudentController {
                         .filter(student -> student.getName().toLowerCase().contains(search.toLowerCase()))
                         .collect(Collectors.toList());
             }
+            model.addAttribute("students", students);
         } catch (Exception e) {
             model.addAttribute("error", "Error sorting students by marks: " + e.getMessage());
-            students = List.of(); // Empty list in case of error
         }
 
-        model.addAttribute("students", students);
         model.addAttribute("currentSortOrderName", currentSortOrderName);
         model.addAttribute("currentSortOrderMarks", currentSortOrderMarks);
         model.addAttribute("search", search);
         return "index";
     }
+
 }

@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class StudentService {
@@ -26,6 +27,17 @@ public class StudentService {
             throw new RuntimeException("Unexpected error occurred. Please try again.");
         }
     }
+
+    // Method to get all students
+    public List<Student> getAllStudents() {
+        try {
+            return new ArrayList<>(students); // Returns a copy of the list
+        } catch (Exception e) {
+            System.err.println("Error retrieving all students: " + e.getMessage());
+            throw new RuntimeException("Unexpected error occurred while fetching students.");
+        }
+    }
+
 
     // Method to find a student by ID
     public Student findStudentById(String id) {
@@ -85,15 +97,7 @@ public class StudentService {
         }
     }
 
-    // Method to get all students
-    public List<Student> getAllStudents() {
-        try {
-            return new ArrayList<>(students);
-        } catch (Exception e) {
-            System.err.println("Error retrieving all students: " + e.getMessage());
-            throw new RuntimeException("Unexpected error occurred while fetching students.");
-        }
-    }
+
 
     // Method to calculate rank based on marks
     public String calculateRank(double marks) {
@@ -160,21 +164,26 @@ public class StudentService {
         }
     }
 
-    // Search students by name
+    // Search students by name using LinearSearch
     public List<Student> searchStudentsByName(String name) {
+        // Validate input
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Search name cannot be null or empty.");
+        }
+
+        // Ensure the students list is not null
+        if (students == null) {
+            throw new IllegalStateException("The students list is not initialized.");
+        }
+
         try {
-            if (name == null || name.isEmpty()) {
-                throw new IllegalArgumentException("Search name cannot be null or empty.");
-            }
+            // Filter students by name (case-insensitive and null-safe)
             return students.stream()
-                    .filter(s -> s.getName().toLowerCase().contains(name.toLowerCase()))
-                    .toList();
-        } catch (IllegalArgumentException e) {
-            System.err.println("Validation Error: " + e.getMessage());
-            throw e;
+                    .filter(s -> s.getName() != null && s.getName().toLowerCase().contains(name.toLowerCase()))
+                    .collect(Collectors.toList());
         } catch (Exception e) {
-            System.err.println("Error searching students: " + e.getMessage());
-            throw new RuntimeException("Unexpected error occurred while searching students.");
+            System.err.println("Error occurred while searching students: " + e.getMessage());
+            throw new RuntimeException("Unexpected error occurred during the search.", e);
         }
     }
 }
